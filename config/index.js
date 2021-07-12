@@ -1,0 +1,1 @@
+export {bgHEX} from './colors';
