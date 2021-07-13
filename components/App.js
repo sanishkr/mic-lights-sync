@@ -52,7 +52,9 @@ class App extends Component {
 
   callbackHandler = debounce((value) => {
     // console.log({diff: value, sensitivity: this.state.sensitivity})
-    this.changeBgColor()
+    if(document.visibilityState === 'visible') {
+      this.changeBgColor()
+    }
   }, 20, {
     leading: true,
   });
