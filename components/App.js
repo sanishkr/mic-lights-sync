@@ -1,5 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { debounce } from 'lodash';
+import { usePubNub } from 'pubnub-react';
 
 import AudioAnalyser from '../utils/AudioAnalyser';
 import { bgHEX } from '../config';
@@ -14,89 +15,111 @@ const getRandomColor = () => {
   return randomHex;
 }
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      audio: null,
-      sensitivity: 0.3,
-    };
-    this.appElement = React.createRef();
-    this.toggleMicrophone = this.toggleMicrophone.bind(this);
-  }
+const App = () => {
+  const appElement = React.createRef();
+  const [audio, setAudio] = useState();
+  const [sensitivity, setSensitivity] = useState(0.3);
+  const pubnub = usePubNub();
+  const [channels] = useState(['awesome-channel']);
+  const [messages, addMessage] = useState([]);
+  const [message, setMessage] = useState('');
 
-  async getMicrophone() {
+  const getMicrophone = async () => {
     const audio = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false
     });
-    this.setState({ audio });
+    setAudio(audio)
   }
 
-  stopMicrophone() {
-    this.state.audio.getTracks().forEach(track => track.stop());
-    this.setState({ audio: null });
+  const stopMicrophone = () => {
+    audio.getTracks().forEach(track => track.stop());
+    setAudio(null)
   }
 
-  toggleMicrophone() {
-    if (this.state.audio) {
-      this.stopMicrophone();
+  const toggleMicrophone = () => {
+    if (audio) {
+      stopMicrophone();
     } else {
-      this.getMicrophone();
+      getMicrophone();
     }
   }
 
-  componentDidMount() {
-    this.getMicrophone();
-  }
-
-  callbackHandler = debounce((value) => {
-    // console.log({diff: value, sensitivity: this.state.sensitivity})
+  const callbackHandler = debounce((value) => {
     if(document.visibilityState === 'visible') {
-      this.changeBgColor()
+      // console.log({diff: value, sensitivity: sensitivity})
+      const hex = getRandomColor();
+      changeBgColor(hex);
+      // sendMessage({type: 'colorChange', hex})
     }
   }, 20, {
     leading: true,
   });
 
-  changeBgColor = () => {
-    this.appElement.current.style.backgroundColor = getRandomColor();
+  const changeBgColor = (hex) => {
+    appElement.current.style.backgroundColor = hex;
   }
 
-  handleSeekChange = e => {
-    this.setState({sensitivity: parseFloat(e.target.value)});
+  const handleSeekChange = e => {
+    setSensitivity(parseFloat(e.target.value))
   };
 
-  render() {
-    return (
-      <div className={styles.App} ref={this.appElement}>
-        <div className={styles.controls}>
-          <input
-            className={styles.sensitivity}
-            type="range"
-            min={0}
-            max={0.999999}
-            step="any"
-            value={this.state.sensitivity}
-            onChange={this.handleSeekChange}
-            // onMouseDown={handleSeekMouseDown}
-            // onMouseUp={handleSeekMouseUp}
-          />
-          <span>Sensitivity</span>
-          {/* <button onClick={this.toggleMicrophone}>
-            {this.state.audio ? 'Stop microphone' : 'Allow microphone input'}
-          </button> */}
-        </div>
-        {this.state.audio ? 
-        <AudioAnalyser 
-          audio={this.state.audio}
-          sensitivity={this.state.sensitivity}
-          cb={this.callbackHandler}
-        /> 
-        : ''}
+  const handleMessage = event => {
+    console.log(event);
+    const message = event.message;
+    if (message.hasOwnProperty('type') && message.type === 'colorChange') {
+      const hex = message.hex;
+      console.log({hex});
+      changeBgColor(hex);
+      // addMessage(messages => [...messages, text]);
+    }
+  };
+
+  const sendMessage = message => {
+    if (message) {
+      pubnub
+        .publish({ channel: channels[0], message })
+        .then(() => setMessage(''));
+    }
+  };
+
+  useEffect(() => {
+    getMicrophone();
+  }, [])
+
+  useEffect(() => {
+    pubnub.addListener({ message: handleMessage });
+    pubnub.subscribe({ channels });
+  }, [pubnub, channels]);
+
+  return (
+    <div className={styles.App} ref={appElement}>
+      <div className={styles.controls}>
+        <input
+          className={styles.sensitivity}
+          type="range"
+          min={0}
+          max={0.999999}
+          step="any"
+          value={sensitivity}
+          onChange={handleSeekChange}
+          // onMouseDown={handleSeekMouseDown}
+          // onMouseUp={handleSeekMouseUp}
+        />
+        <span>Sensitivity</span>
+        {/* <button onClick={this.toggleMicrophone}>
+          {this.state.audio ? 'Stop microphone' : 'Allow microphone input'}
+        </button> */}
       </div>
-    );
-  }
+      {audio ? 
+      <AudioAnalyser 
+        audio={audio}
+        sensitivity={sensitivity}
+        cb={callbackHandler}
+      /> 
+      : ''}
+    </div>
+  );
 }
 
 export default App;
