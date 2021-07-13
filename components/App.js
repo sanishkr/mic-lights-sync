@@ -50,7 +50,7 @@ const App = () => {
       // console.log({diff: value, sensitivity: sensitivity})
       const hex = getRandomColor();
       changeBgColor(hex);
-      // sendMessage({type: 'colorChange', hex})
+      sendMessage({type: 'colorChange', hex})
     }
   }, 20, {
     leading: true,
