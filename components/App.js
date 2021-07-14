@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { debounce } from 'lodash';
 import { usePubNub } from 'pubnub-react';
 import { useSwipeable } from 'react-swipeable';
+import OtpInput from 'react-otp-input';
+import otpGenerator from 'otp-generator';
 
 import AudioAnalyser from '../utils/AudioAnalyser';
 import { bgHEX } from '../config';
@@ -25,24 +27,27 @@ const swipeConfig = {
   rotationAngle: 0 // set a rotation angle
 };
 
+const otpGeneratorConfig = { digits: true, alphabets: false, upperCase: false, specialChars: false }
+
 const App = () => {
   const appElement = React.createRef();
   const [audio, setAudio] = useState();
   const [sensitivity, setSensitivity] = useState(0.3);
   const pubnub = usePubNub();
-  const [channels] = useState(['awesome-channel']);
+  const [channels] = useState(['']);
+  const [channelCode, setChannelCode] = useState('');
   const [messages, addMessage] = useState([]);
   const [message, setMessage] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
   const onSwipedUp = (eventData) => {
     setModalOpen(true)
-    console.log("User Swiped Up!!", eventData);
+    // console.log("User Swiped Up!!", eventData);
   }
 
   const onSwipedDown = (eventData) => {
     setModalOpen(false)
-    console.log("User Swiped Down!!", eventData);
+    // console.log("User Swiped Down!!", eventData);
   }
 
   const SwipeUpHandler = useSwipeable({
@@ -116,14 +121,30 @@ const App = () => {
     }
   };
 
+  const handlePartyCode = (code) => {
+    setChannelCode(code)
+    console.log({code})
+  };
+
+  const getNewChannelCode = () => {
+    const channel = otpGenerator.generate(6, otpGeneratorConfig);
+    console.log({channel});
+    return channel
+  }
+
+  const createParty = () => {
+    const code = getNewChannelCode()
+    setChannelCode(code);
+  }
+
   useEffect(() => {
     getMicrophone();
-  }, [])
+  }, []);
 
   useEffect(() => {
     pubnub.addListener({ message: handleMessage });
-    pubnub.subscribe({ channels });
-  }, [pubnub, channels]);
+    channelCode && pubnub.subscribe({ channels: [channelCode] });
+  }, [pubnub, channelCode]);
 
   return (
     <div className={styles.App} ref={appElement}>
@@ -136,13 +157,13 @@ const App = () => {
       : null}
 
       <div {...SwipeUpHandler} className={styles.settings}>
-        <span>&#8682;</span>
+        <span onClick={onSwipedUp} className={styles.swipeUpIcon}>&#8682;</span>
       </div>
 
       {
         modalOpen ? 
-        <div className={styles.modalWrapper} onClick={onSwipedUp}>
-          <div className={styles.modalBackdrop} onClick={onSwipedDown}>
+        <div className={styles.modalWrapper}>
+          <div className={styles.modalBackdrop}>
             <div className={styles.modalContainer} {...SwipeDownHandler}>
               <h3>Settings</h3>
               <div className={styles.controls}>
@@ -161,9 +182,29 @@ const App = () => {
                   <span>Sensitivity</span>
                 </div>
                 <button className={styles.micButton} onClick={toggleMicrophone}>
-                  <Image src={audio ? '/images/mic-on.png' : '/images/mic-off.png'} width={40} height={40} alt="mic status" />
+                  <Image src={audio ? '/images/mic-on.png' : '/images/mic-off.png'} width={32} height={32} alt="mic status" />
                   {/* {audio ? 'Stop microphone' : 'Allow microphone input'} */}
                 </button>
+              </div>
+
+              <div className={styles.party}>
+                {/* <OtpInput
+                  value={channelCode}
+                  onChange={handlePartyCode}
+                  numInputs={6}
+                  separator={<span></span>}
+                  isDisabled={false}
+                  isInputNum={true}
+                  inputStyle={styles.otpInput}
+                /> */}
+                <div className={styles.buttonGroup}>
+                  <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={createParty}>Create Party</button>
+                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Join Party</button>
+                </div>
+                {/* <div className={styles.buttonGroup}>
+                  <button className={`${styles.btn} ${styles.btnError}`}>Leave Party</button>
+                  <button className={`${styles.btn} ${styles.btnPrimary}`}>Invite  🎉</button>
+                </div> */}
               </div>
             </div>
           </div>
