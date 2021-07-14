@@ -1,6 +1,7 @@
 import React, { Component, useEffect, useState } from 'react';
 import { debounce } from 'lodash';
 import { usePubNub } from 'pubnub-react';
+import { useSwipeable } from 'react-swipeable';
 
 import AudioAnalyser from '../utils/AudioAnalyser';
 import { bgHEX } from '../config';
@@ -15,6 +16,14 @@ const getRandomColor = () => {
   return randomHex;
 }
 
+const swipeConfig = {
+  delta: 25, // min distance(px) before a swipe starts
+  preventDefaultTouchmoveEvent: true, // preventDefault on touchmove, *See Details*
+  trackTouch: true, // track touch input
+  trackMouse: false, // track mouse input
+  rotationAngle: 0 // set a rotation angle
+};
+
 const App = () => {
   const appElement = React.createRef();
   const [audio, setAudio] = useState();
@@ -23,7 +32,28 @@ const App = () => {
   const [channels] = useState(['awesome-channel']);
   const [messages, addMessage] = useState([]);
   const [message, setMessage] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
 
+  const onSwipedUp = (eventData) => {
+    setModalOpen(true)
+    console.log("User Swiped Up!!", eventData);
+  }
+
+  const onSwipedDown = (eventData) => {
+    setModalOpen(false)
+    console.log("User Swiped Down!!", eventData);
+  }
+
+  const SwipeUpHandler = useSwipeable({
+    onSwipedUp,
+    ...swipeConfig,
+  });
+
+  const SwipeDownHandler = useSwipeable({
+    onSwipedDown,
+    ...swipeConfig,
+  });
+  
   const getMicrophone = async () => {
     const audio = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -57,7 +87,9 @@ const App = () => {
   });
 
   const changeBgColor = (hex) => {
-    appElement.current.style.backgroundColor = hex;
+    if(appElement.current){
+      appElement.current.style.backgroundColor = hex;
+    }
   }
 
   const handleSeekChange = e => {
@@ -94,30 +126,47 @@ const App = () => {
 
   return (
     <div className={styles.App} ref={appElement}>
-      <div className={styles.controls}>
-        <input
-          className={styles.sensitivity}
-          type="range"
-          min={0}
-          max={0.999999}
-          step="any"
-          value={sensitivity}
-          onChange={handleSeekChange}
-          // onMouseDown={handleSeekMouseDown}
-          // onMouseUp={handleSeekMouseUp}
-        />
-        <span>Sensitivity</span>
-        {/* <button onClick={this.toggleMicrophone}>
-          {this.state.audio ? 'Stop microphone' : 'Allow microphone input'}
-        </button> */}
-      </div>
       {audio ? 
       <AudioAnalyser 
         audio={audio}
         sensitivity={sensitivity}
         cb={callbackHandler}
       /> 
-      : ''}
+      : null}
+
+      <div {...SwipeUpHandler} className={styles.settings}>
+        <span>&#8682;</span>
+      </div>
+
+      {
+        modalOpen ? 
+        <div className={styles.modalWrapper} onClick={onSwipedUp}>
+          <div className={styles.modalBackdrop} onClick={onSwipedDown}>
+            <div className={styles.modalContainer} {...SwipeDownHandler}>
+              <h3>Settings</h3>
+              <div className={styles.controls}>
+                <input
+                  className={styles.sensitivity}
+                  type="range"
+                  min={0}
+                  max={0.999999}
+                  step="any"
+                  value={sensitivity}
+                  onChange={handleSeekChange}
+                  // onMouseDown={handleSeekMouseDown}
+                  // onMouseUp={handleSeekMouseUp}
+                />
+                <span>Sensitivity</span>
+                <button onClick={toggleMicrophone}>
+                  <img src={audio ? '/images/mic-on.png' : '/images/mic-off.png'} title="mic status" />
+                  {audio ? 'Stop microphone' : 'Allow microphone input'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        : null
+      }
     </div>
   );
 }
