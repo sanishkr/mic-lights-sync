@@ -1,4 +1,5 @@
 import React, { Component, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { debounce } from 'lodash';
 import { usePubNub } from 'pubnub-react';
 import { useSwipeable } from 'react-swipeable';
@@ -145,21 +146,23 @@ const App = () => {
             <div className={styles.modalContainer} {...SwipeDownHandler}>
               <h3>Settings</h3>
               <div className={styles.controls}>
-                <input
-                  className={styles.sensitivity}
-                  type="range"
-                  min={0}
-                  max={0.999999}
-                  step="any"
-                  value={sensitivity}
-                  onChange={handleSeekChange}
-                  // onMouseDown={handleSeekMouseDown}
-                  // onMouseUp={handleSeekMouseUp}
-                />
-                <span>Sensitivity</span>
-                <button onClick={toggleMicrophone}>
-                  <img src={audio ? '/images/mic-on.png' : '/images/mic-off.png'} title="mic status" />
-                  {audio ? 'Stop microphone' : 'Allow microphone input'}
+                <div className={styles.sensitivityWrapper}>
+                  <input
+                    className={styles.sensitivity}
+                    type="range"
+                    min={0}
+                    max={0.999999}
+                    step="any"
+                    value={sensitivity}
+                    onChange={handleSeekChange}
+                    // onMouseDown={handleSeekMouseDown}
+                    // onMouseUp={handleSeekMouseUp}
+                  />
+                  <span>Sensitivity</span>
+                </div>
+                <button className={styles.micButton} onClick={toggleMicrophone}>
+                  <Image src={audio ? '/images/mic-on.png' : '/images/mic-off.png'} width={40} height={40} alt="mic status" />
+                  {/* {audio ? 'Stop microphone' : 'Allow microphone input'} */}
                 </button>
               </div>
             </div>
