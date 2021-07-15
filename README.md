@@ -38,8 +38,10 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 * [ ] PWA Install
 * [ ] Toastr Design Improvement
-* [ ] Name User
-* [ ] Name Channel
+* [ ] Name/Update User
+* [ ] Name/Update Channel
+* [ ] Add channel admin
+* [ ] Update channel Admin
 * [ ] Count of members
 * [ ] List of members' names
 * [ ] Mic state error messages
@@ -49,4 +51,10 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 * [ ] change control of mic
 * [ ] favicon
 * [ ] PWA icons
-* [ ] 
+* [ ] env variable for dev and prod
+* [ ] Responsive modal, canvas and gesture alternate for desktop
+* [ ] SEO
+* [ ] Join channel with no user error message
+* [ ] PubNub syntax, signal usecase
+* [ ] Local WIFI connection usecase possibility
+* [ ] Current state/channel name info/animation on main screen
