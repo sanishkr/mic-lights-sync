@@ -53,6 +53,7 @@ const App = () => {
   const [message, setMessage] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [canShare, setcanShare] = useState(false);
+  const [copyText, setCopyText] = useState('Copy');
   const { addToast } = useToasts();
 
   console.log({ isPublisher });
@@ -111,6 +112,7 @@ const App = () => {
 
   const changeBgColor = (hex) => {
     if(appElement.current){
+      document.querySelector('meta[name="theme-color"]').setAttribute('content',  hex)
       appElement.current.style.backgroundColor = hex;
     } else {
       // const el = useRef(appElement);
@@ -229,7 +231,11 @@ const App = () => {
     window.navigator.clipboard
       .writeText(channelCode)
       .then(res => {
-        addToast('Code Copied to Clipboard.', { appearance: 'success', autoDismiss: true, autoDismissTimeout: 1000 });
+        addToast('Code Copied to Clipboard 📋', { appearance: 'success', autoDismiss: true, autoDismissTimeout: 2000 });
+        setCopyText('Copied');
+        setTimeout(() => {
+          setCopyText('Copy')
+        }, 2000)
       })
       .catch(err => {
         console.log(err);
@@ -319,11 +325,11 @@ const App = () => {
                   :
                   channelCode ?
                   <div className={styles.buttonGroup}>
-                    <button className={`${styles.btn} ${styles.btnError}`} onClick={leaveParty}>Leave Party</button>
+                    <button className={`${styles.btn} ${styles.btnError}`} onClick={leaveParty}>🚶🚪Leave Party</button>
                     {
                       canShare ?
                       <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={shareInvite}>Invite  🎉</button>
-                      : <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyToClipboard}>Copy Code  🎉</button>
+                      : <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyToClipboard}>{copyText} Code 📋</button>
                     }
                   </div>
                   :

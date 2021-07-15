@@ -24,6 +24,7 @@ export default function Home({cookies}) {
       <Head>
         <title>Colorizer &mdash; Colorful Music Visualizer</title>
         <meta name="description" content="Colorful Visualizer based on Mic Input" />
+        <meta name="theme-color" content="#FFA000" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {
