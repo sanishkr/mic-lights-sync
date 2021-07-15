@@ -7,6 +7,7 @@ import OtpInput from 'react-otp-input';
 import otpGenerator from 'otp-generator';
 import { parseCookies, setCookie, destroyCookie } from "nookies";
 import { useToasts } from 'react-toast-notifications';
+import NoSleep from 'nosleep.js';
 
 import AudioAnalyser from '../utils/AudioAnalyser';
 import { bgHEX } from '../config';
@@ -37,6 +38,7 @@ const cookieConfig = {
 const otpGeneratorConfig = { digits: true, alphabets: false, upperCase: false, specialChars: false }
 
 const App = () => {
+  const noSleep = new NoSleep();
   const appElement = React.createRef();
   const cookies = parseCookies();
   const [audio, setAudio] = useState();
@@ -237,6 +239,7 @@ const App = () => {
   useEffect(() => {
     getMicrophone();
     setcanShare(!!(navigator.share));
+    noSleep.enable()
   }, []);
 
   useEffect(() => {
