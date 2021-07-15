@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { Component, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { debounce } from 'lodash';
 import { usePubNub } from 'pubnub-react';
@@ -43,16 +43,17 @@ const App = () => {
   const [sensitivity, setSensitivity] = useState(parseFloat(cookies.sensitivity) || 0.3);
   const pubnub = usePubNub();
   const [channels] = useState(['']);
-  const [channelCode, setChannelCode] = useState(parseFloat(cookies.channel) || '');
+  const [channelCode, setChannelCode] = useState(cookies.channel || '');
   const [joiningMode, setJoiningMode] = useState(false);
   const [isPublisher, setIsPublisher] = useState(cookies.isPublisher ? JSON.parse(cookies.isPublisher) : true);
   const [partyCode, setPartyCode] = useState();
   const [messages, addMessage] = useState([]);
   const [message, setMessage] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [canShare, setcanShare] = useState(false);
   const { addToast } = useToasts();
 
-  // console.table({ cookies });
+  console.log({ isPublisher });
 
   const onSwipedUp = (eventData) => {
     setModalOpen(true)
@@ -109,6 +110,9 @@ const App = () => {
   const changeBgColor = (hex) => {
     if(appElement.current){
       appElement.current.style.backgroundColor = hex;
+    } else {
+      // const el = useRef(appElement);
+      // el.current.style.backgroundColor = hex;
     }
   }
 
@@ -129,11 +133,20 @@ const App = () => {
       // addMessage(messages => [...messages, text]);
     } else if (message.hasOwnProperty('type') && message.type === 'join') {
       const uuid = message.uuid;
-      console.log({uuid});
+      console.log({joined: uuid});
       addToast('Someone joined the party.', { appearance: 'info', autoDismiss: true, autoDismissTimeout: 2000 });
     } else if (message.hasOwnProperty('type') && message.type === 'leave') {
       const uuid = message.uuid;
-      addToast('Someone left the party.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+      if(uuid === localStorage.getItem('uuid')) {
+        addToast('You left the party.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+      } else {
+        addToast('Someone left the party.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+      }
+      console.log({left: uuid});
+    } else if (message.hasOwnProperty('type') && message.type === 'over') {
+      const uuid = message.uuid;
+      addToast('Party is over. See you next time.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+      changeBgColor('#FFFFFF');
       console.log({uuid});
     }
   };
@@ -159,11 +172,13 @@ const App = () => {
   const handlePartyCode = (code) => {
     setPartyCode(code.toString())
     if(code.length === 6) {
-      setChannelCode(code, () => {
+      pubnub.subscribe({ channels: [channelCode] }, () => {
         sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
       })
+      setChannelCode(code)
       setCookie(null, "channel", code, cookieConfig);
       setJoiningMode(false)
+      setPartyCode('')
     }
     console.log({code})
   };
@@ -180,8 +195,48 @@ const App = () => {
     setCookie(null, "channel", code, cookieConfig);
   }
 
+  const leaveParty = () => {
+    if(!isPublisher) {
+      toggleMicrophone();
+      sendMessage({type: 'leave', uuid: localStorage.getItem('uuid')})
+    } else {
+      sendMessage({type: 'over', uuid: localStorage.getItem('uuid')})
+    }
+    pubnub.unsubscribe({ channels: [channelCode] })
+    changeBgColor('#FFFFFF');
+    destroyCookie(null, "channel");
+    destroyCookie(null, "isPublisher");
+    setChannelCode('')
+    setIsPublisher(true)
+  }
+
+  const shareInvite = () => {
+    if (canShare) {
+      navigator
+        .share({
+          title: `Rave Party At Colorizer`,
+          text: `Hey!! Join me in the party using this code ${channelCode}. Let's Vibe together 🤟`,
+          url: `${document.location.href}`
+        })
+        .then(() => console.log('Successful share'))
+        .catch(error => console.log('Error sharing', error));
+    }
+  };
+
+  const copyToClipboard = () => {
+    window.navigator.clipboard
+      .writeText(channelCode)
+      .then(res => {
+        addToast('Code Copied to Clipboard.', { appearance: 'success', autoDismiss: true, autoDismissTimeout: 1000 });
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
   useEffect(() => {
     getMicrophone();
+    setcanShare(!!(navigator.share));
   }, []);
 
   useEffect(() => {
@@ -261,8 +316,12 @@ const App = () => {
                   :
                   channelCode ?
                   <div className={styles.buttonGroup}>
-                    <button className={`${styles.btn} ${styles.btnError}`}>Leave Party</button>
-                    <button className={`${styles.btn} ${styles.btnPrimary}`}>Invite  🎉</button>
+                    <button className={`${styles.btn} ${styles.btnError}`} onClick={leaveParty}>Leave Party</button>
+                    {
+                      canShare ?
+                      <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={shareInvite}>Invite  🎉</button>
+                      : <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyToClipboard}>Copy Code  🎉</button>
+                    }
                   </div>
                   :
                   <div className={styles.buttonGroup}>
