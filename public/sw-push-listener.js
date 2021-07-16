@@ -11,7 +11,7 @@ window.addEventListener('beforeinstallprompt', function (e) {
 
 function showAddToHomeScreen() {
   var a2hsBtn = document.querySelector(".ad2hs-prompt");
-  a2hsBtn.style.display = "inline-block";
+  a2hsBtn.style.display = "flex";
   a2hsBtn.addEventListener("click", addToHomeScreen);
 }
 

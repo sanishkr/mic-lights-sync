@@ -275,6 +275,9 @@ const App = () => {
 
   return (
     <div className={styles.App} ref={appElement}>
+      <div className={`${styles.a2hsContainer} ad2hs-prompt`}>
+        <Image src="/images/a2hs.png" alt="a2hs" width="32" height="32" />
+      </div>
       {audio && isPublisher ? 
       <AudioAnalyser 
         audio={audio}

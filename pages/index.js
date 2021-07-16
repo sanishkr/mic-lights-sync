@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Script from 'next/script'
 import PubNub from 'pubnub';
 import { PubNubProvider } from 'pubnub-react';
 import { parseCookies, setCookie } from "nookies";
@@ -46,16 +47,17 @@ export default function Home({cookies}) {
         <meta name="msapplication-TileColor" content="#ffffff" />
         <meta name="msapplication-TileImage" content="/ms-icon-144x144.png" />
         <meta name="theme-color" content="#ffffff" />
-      </Head>
-      {
-        pubnub ?
-        <PubNubProvider client={pubnub}>
+        </Head>
+        {
+          pubnub ?
+          <PubNubProvider client={pubnub}>
           <ToastProvider>
-            <App />
+          <App />
           </ToastProvider>
-        </PubNubProvider>
-        : null
-      }
+          </PubNubProvider>
+          : null
+        }
+      <Script src="/sw-push-listener.js"></Script>
     </div>
   )
 }
