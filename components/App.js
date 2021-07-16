@@ -330,7 +330,7 @@ const App = () => {
                       setPartyCode('');
                       setJoiningMode(false);
                     }}>Cancel</button>
-                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={joinParty} disabled={partyCode.length < 6}>Enter Now 🎉</button>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={joinParty} disabled={(partyCode?.length ?? '') < 6}>Enter Now 🎉</button>
                   </div>
                   :
                   channelCode ?
