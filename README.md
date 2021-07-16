@@ -45,14 +45,14 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 * [ ] Count of members
 * [ ] List of members' names
 * [ ] Mic state error messages
-* [ ] Back and Join buttons in joining Mode state
+* [x] Back and Join buttons in joining Mode state
 * [ ] Sensitivity volume icon indicators
-* [ ] delete channel
-* [ ] change control of mic
-* [ ] favicon
+* [ ] Delete channel
+* [ ] Swap control of mic to member
+* [ ] Favicon
 * [ ] PWA icons
 * [ ] env variable for dev and prod
-* [ ] Responsive modal, canvas and gesture alternate for desktop
+* [x] Responsive modal, canvas and gesture alternate for desktop
 * [ ] SEO
 * [ ] Join channel with no user error message
 * [ ] PubNub syntax, signal usecase

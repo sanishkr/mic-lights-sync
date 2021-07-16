@@ -175,16 +175,24 @@ const App = () => {
 
   const handlePartyCode = (code) => {
     setPartyCode(code.toString())
-    if(code.length === 6) {
+    console.log({code})
+  };
+
+  const joinParty = () => {
+    if(partyCode.length === 6) {
       pubnub.subscribe({ channels: [channelCode] }, () => {
         sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
       })
-      setChannelCode(code)
-      setCookie(null, "channel", code, cookieConfig);
+      setChannelCode(partyCode)
+      setCookie(null, "channel", partyCode, cookieConfig);
       setJoiningMode(false)
       setPartyCode('')
+      setAudio(false);
+      setIsPublisher(false);
+      setCookie(null, "isPublisher", false, cookieConfig);
+      toggleMicrophone();
     }
-    console.log({code})
+    console.log({partyCode})
   };
 
   const getNewChannelCode = () => {
@@ -272,7 +280,10 @@ const App = () => {
         <div className={styles.modalWrapper}>
           <div className={styles.modalBackdrop}>
             <div className={styles.modalContainer} {...SwipeDownHandler}>
-              <h3>Settings</h3>
+              <div className={styles.modalHeader}>
+                <h3>Settings</h3>
+                <a onClick={() => setModalOpen(false)}><span>&#10005;</span></a>
+              </div>
               {
                 isPublisher ? 
                 <div className={styles.controls}>
@@ -315,12 +326,11 @@ const App = () => {
                 {
                   joiningMode ?
                   <div className={styles.buttonGroup}>
-                    {/* <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => {
-                    setJoiningMode(true);
-                    setAudio(false);
-                    setIsPublisher(false);
-                    toggleMicrophone()
-                    }}>Join Party 🎉</button> */}
+                    <button className={`${styles.btn} ${styles.btnError}`} onClick={() => {
+                      setPartyCode('');
+                      setJoiningMode(false);
+                    }}>Cancel</button>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={joinParty} disabled={partyCode.length < 6}>Enter Now 🎉</button>
                   </div>
                   :
                   channelCode ?
@@ -334,13 +344,8 @@ const App = () => {
                   </div>
                   :
                   <div className={styles.buttonGroup}>
-                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={createParty}>Create Party</button>
-                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => {
-                    setJoiningMode(true);
-                    setAudio(false);
-                    setIsPublisher(false);
-                    toggleMicrophone()
-                    }}>Join Party</button>
+                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={createParty}>Host Party</button>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setJoiningMode(true)}>Join Party</button>
                   </div>
                 }
               </div>

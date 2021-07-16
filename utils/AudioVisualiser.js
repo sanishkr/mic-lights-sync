@@ -48,7 +48,7 @@ class AudioVisualiser extends Component {
   }
 
   render() {
-    return <canvas style={{position: 'absolute'}} width="300" height="400" ref={this.canvas} />;
+    return <canvas style={{position: 'absolute'}} width={window.innerWidth * 0.8} height="400" ref={this.canvas} />;
   }
 }
 
