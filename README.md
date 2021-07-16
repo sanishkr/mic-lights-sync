@@ -36,7 +36,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 ## To Do
 
-* [ ] PWA Install
+* [x] PWA Install
 * [ ] Toastr Design Improvement
 * [ ] Name/Update User
 * [ ] Name/Update Channel
@@ -49,8 +49,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 * [ ] Sensitivity volume icon indicators
 * [ ] Delete channel
 * [ ] Swap control of mic to member
-* [ ] Favicon
-* [ ] PWA icons
+* [x] Favicon
+* [x] PWA icons
 * [ ] env variable for dev and prod
 * [x] Responsive modal, canvas and gesture alternate for desktop
 * [ ] SEO
