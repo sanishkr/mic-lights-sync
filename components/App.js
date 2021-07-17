@@ -68,8 +68,6 @@ const App = () => {
   const [copyText, setCopyText] = useState('Copy');
   const { addToast } = useToasts();
 
-  console.log({ isPublisher });
-
   const onSwipedUp = (eventData) => {
     setModalOpen(true)
     // console.log("User Swiped Up!!", eventData);
@@ -123,12 +121,12 @@ const App = () => {
   });
 
   const changeBgColor = (hex) => {
-    if(appElement.current){
-      document.querySelector('meta[name="theme-color"]').setAttribute('content',  hex)
+    document.querySelector('meta[name="theme-color"]').setAttribute('content',  hex)
+    if(appElement?.current){
       appElement.current.style.backgroundColor = hex;
     } else {
-      // const el = useRef(appElement);
-      // el.current.style.backgroundColor = hex;
+      const el = document.getElementById('bgEl');
+      el.style.backgroundColor = hex;
     }
   }
 
@@ -140,7 +138,6 @@ const App = () => {
 
   const handleMessage = event => {
     console.log(event);
-    checkIfPublisher(event);
     const message = event.message;
     if (message.hasOwnProperty('type') && message.type === 'colorChange') {
       const hex = message.hex;
@@ -167,19 +164,23 @@ const App = () => {
     }
   };
 
-  const checkIfPublisher = (event) => {
+  const checkIfPublisher = (data) => {
     const uuid = localStorage.getItem('uuid')
-    console.log(event.publisher, uuid);
-    console.log(event.publisher !== uuid);
-    if(event.publisher !== uuid) {
-      setIsPublisher(false);
-      setCookie(null, "isPublisher", false, cookieConfig);
+    // console.log(data.custom.admin !== uuid);
+    if(data?.custom?.admin) {
+      console.log(data.custom.admin, uuid);
+      setIsPublisher(data.custom.admin === uuid);
+      // setAudio(data.custom.admin === uuid);
+      if(audio && data.custom.admin !== uuid){
+        toggleMicrophone()
+      }
+      setCookie(null, "isPublisher", data.custom.admin === uuid, cookieConfig);
     }
   }
 
-  const sendMessage = message => {
-    if (message) {
-      pubnub
+  const sendMessage = async (message) => {
+    if (message && pubnub) {
+      await pubnub
         .publish({ channel: channelCode, message })
         .then(() => setMessage(''));
     }
@@ -190,18 +191,19 @@ const App = () => {
     console.log({code})
   };
 
-  const joinParty = () => {
+  const joinParty = async () => {
     if(partyCode.length === 6) {
-      pubnub.subscribe({ channels: [channelCode] }, () => {
-        sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
-      })
+      // await pubnub.subscribe({ channels: [channelCode] }, async () => {
+      //   // await updateChannelMeta();
+      //   sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
+      // })
       setChannelCode(partyCode)
       setCookie(null, "channel", partyCode, cookieConfig);
-      setJoiningMode(false)
+      // setJoiningMode(false)
       setPartyCode('')
       setAudio(false);
-      setIsPublisher(false);
-      setCookie(null, "isPublisher", false, cookieConfig);
+      // setIsPublisher(false);
+      // setCookie(null, "isPublisher", false, cookieConfig);
       toggleMicrophone();
     }
     console.log({partyCode})
@@ -213,9 +215,10 @@ const App = () => {
     return channel
   }
 
-  const createParty = () => {
+  const createParty = async () => {
     const code = getNewChannelCode().toString()
     setChannelCode(code);
+    // await updateChannelMeta();
     setCookie(null, "channel", code, cookieConfig);
   }
 
@@ -265,16 +268,53 @@ const App = () => {
   useEffect(() => {
     getMicrophone();
     setcanShare(!!(navigator.share));
+    pubnub.addListener({ message: handleMessage });
     noSleep.enable()
   }, []);
 
+  const updateChannelMeta = async () => {
+    if(pubnub) {
+      const res = await pubnub?.objects?.setChannelMetadata({
+        channel: channelCode,
+        data: {
+          name: `Rave Party #${channelCode}`,
+          custom: {
+            admin: localStorage.getItem('uuid'),
+          },
+        }
+      });
+      console.log({res});
+    }
+  }
+
+  const getChannelMeta = async () => {
+    // console.log({pubnub});
+    if(pubnub){
+      const res = await pubnub.objects.getChannelMetadata({channel: channelCode});
+      checkIfPublisher(res.data);
+      console.log({res});
+    }
+  }
+
   useEffect(() => {
-    pubnub.addListener({ message: handleMessage });
-    channelCode && channelCode.length === 6 && pubnub.subscribe({ channels: [channelCode] });
+    (async () => {
+      // await pubnub.addListener({ message: handleMessage });
+      if(pubnub && channelCode && channelCode.length === 6) { 
+        await pubnub.subscribe({ channels: [channelCode] });
+        if(joiningMode) {
+          setJoiningMode(false)
+        } else {
+          await updateChannelMeta();
+        }
+        await getChannelMeta();
+        console.log({pubnub});
+      }
+    })();
   }, [pubnub, channelCode]);
 
+  console.log({ isPublisher, audio });
   return (
-    <div className={styles.App} ref={appElement}>
+    <div className={styles.App} id="bgEl" ref={appElement}>
       <div className={`${styles.a2hsContainer} ad2hs-prompt`}>
         <Image src="/images/a2hs.png" alt="a2hs" width="32" height="32" />
       </div>
