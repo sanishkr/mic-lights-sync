@@ -37,21 +37,21 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## To Do
 
 * [x] PWA Install
-* [ ] Toastr Design Improvement
+* [x] Toastr Design Improvement
 * [ ] Name/Update User
 * [ ] Name/Update Channel
 * [ ] Add channel admin
 * [ ] Update channel Admin
+* [ ] Swap control of mic to member
 * [ ] Count of members
 * [ ] List of members' names
 * [ ] Mic state error messages
 * [x] Back and Join buttons in joining Mode state
 * [ ] Sensitivity volume icon indicators
 * [ ] Delete channel
-* [ ] Swap control of mic to member
 * [x] Favicon
 * [x] PWA icons
-* [ ] env variable for dev and prod
+* [x] env variable for dev and prod
 * [x] Responsive modal, canvas and gesture alternate for desktop
 * [ ] SEO
 * [ ] Join channel with no user error message
