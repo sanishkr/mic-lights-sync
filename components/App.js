@@ -123,12 +123,12 @@ const App = () => {
   });
 
   const changeBgColor = (hex) => {
-    if(appElement.current){
-      document.querySelector('meta[name="theme-color"]').setAttribute('content',  hex)
+    document.querySelector('meta[name="theme-color"]').setAttribute('content',  hex)
+    if(appElement?.current){
       appElement.current.style.backgroundColor = hex;
     } else {
-      // const el = useRef(appElement);
-      // el.current.style.backgroundColor = hex;
+      const el = document.getElementById('bgEl');
+      el.style.backgroundColor = hex;
     }
   }
 
@@ -161,8 +161,9 @@ const App = () => {
       console.log({left: uuid});
     } else if (message.hasOwnProperty('type') && message.type === 'over') {
       const uuid = message.uuid;
-      addToast('Party is over. See you next time.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+      addToast('Party is over. See you next time.', { appearance: 'error', autoDismiss: false});
       changeBgColor('#FFFFFF');
+      leaveParty()
       console.log({uuid});
     }
   };
@@ -171,7 +172,7 @@ const App = () => {
     const uuid = localStorage.getItem('uuid')
     console.log(event.publisher, uuid);
     console.log(event.publisher !== uuid);
-    if(event.publisher !== uuid) {
+    if(event.publisher !== uuid && event.message.type !== 'leave') {
       setIsPublisher(false);
       setCookie(null, "isPublisher", false, cookieConfig);
     }
@@ -274,7 +275,7 @@ const App = () => {
   }, [pubnub, channelCode]);
 
   return (
-    <div className={styles.App} ref={appElement}>
+    <div className={styles.App} id="bgEl" ref={appElement}>
       <div className={`${styles.a2hsContainer} ad2hs-prompt`}>
         <Image src="/images/a2hs.png" alt="a2hs" width="32" height="32" />
       </div>
