@@ -63,10 +63,14 @@ const addToast = debounce((msg, { icon='🎉', appearance='success', autoDismiss
     },
     icon,
   });
+<<<<<<< HEAD
 }, 2000, {
   leading: true,
   trailing: false,
 });
+=======
+}, 2000);
+>>>>>>> 310569f854653b399ed73bd0f8fd9de9355dcd76
 
 const otpGeneratorConfig = { digits: true, alphabets: false, upperCase: false, specialChars: false }
 
@@ -84,7 +88,10 @@ const App = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [canShare, setcanShare] = useState(false);
   const [copyText, setCopyText] = useState('Copy');
+<<<<<<< HEAD
   const [micPermissionState, setMicPermissionState] = useState();
+=======
+>>>>>>> 310569f854653b399ed73bd0f8fd9de9355dcd76
 
   const onSwipedUp = (eventData) => {
     setModalOpen(true)
@@ -270,9 +277,13 @@ const App = () => {
         await sendMessage({type: 'over', uuid: localStorage.getItem('uuid')})
       }
     }
+<<<<<<< HEAD
     setTimeout(async () => {
       await pubnub.unsubscribe({ channels: [channelCode] })
     }, 500);
+=======
+    await pubnub.unsubscribe({ channels: [channelCode] })
+>>>>>>> 310569f854653b399ed73bd0f8fd9de9355dcd76
     changeBgColor('#FFFFFF');
     destroyCookie(null, "channel");
     destroyCookie(null, "isPublisher");
