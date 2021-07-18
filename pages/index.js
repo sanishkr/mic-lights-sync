@@ -1,20 +1,20 @@
+import { useEffect, useState } from 'react';
 import Head from 'next/head'
 import Script from 'next/script'
 import PubNub from 'pubnub';
 import { PubNubProvider } from 'pubnub-react';
 import { parseCookies, setCookie } from "nookies";
-import { ToastProvider } from 'react-toast-notifications';
+import { Toaster } from 'react-hot-toast';
 
 import App from '../components/App';
 import {getUuid} from '../utils/UUID';
 
 import styles from '../styles/Home.module.css'
-import { useEffect, useState } from 'react';
 export default function Home({cookies}) {
   // console.log({cookies});
   const [pubnub, setPubnub] = useState();
   useEffect(() => {
-    console.log(process.env.NEXT_PUBLIC_publishKey);
+    // console.log(process.env.NEXT_PUBLIC_publishKey);
     setPubnub(new PubNub({
       publishKey: process.env.NEXT_PUBLIC_publishKey,
       subscribeKey: process.env.NEXT_PUBLIC_subscribeKey,
@@ -52,12 +52,11 @@ export default function Home({cookies}) {
         {
           pubnub ?
           <PubNubProvider client={pubnub}>
-          <ToastProvider>
-          <App />
-          </ToastProvider>
+            <App />
           </PubNubProvider>
           : null
         }
+        <Toaster/>
       <Script src="/sw-push-listener.js"></Script>
     </div>
   )

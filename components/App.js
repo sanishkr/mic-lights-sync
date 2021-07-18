@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { debounce } from 'lodash';
 import { usePubNub } from 'pubnub-react';
@@ -6,8 +6,8 @@ import { useSwipeable } from 'react-swipeable';
 import OtpInput from 'react-otp-input';
 import otpGenerator from 'otp-generator';
 import { parseCookies, setCookie, destroyCookie } from "nookies";
-import { useToasts } from 'react-toast-notifications';
 import NoSleep from 'nosleep.js';
+import toast from 'react-hot-toast';
 
 import AudioAnalyser from '../utils/AudioAnalyser';
 import { bgHEX } from '../config';
@@ -47,6 +47,27 @@ const cookieConfig = {
   path: "/"
 };
 
+const addToast = debounce((msg, { icon='🎉', appearance='success', autoDismiss=true, autoDismissTimeout=2000 }) => {
+  toast((t) => (
+    <span>{msg} <a onClick={() => toast.dismiss(t.id)}>&nbsp; &#10005;</a></span>), {
+    position: 'top-center',
+    duration: !autoDismiss ? Infinity : autoDismissTimeout,
+    style: {
+      backgroundColor: '#000000bf',
+      color: '#c3c3c3',
+      fontSize: '0.75rem',
+      padding: '0.5rem',
+      paddingRight: '1rem',
+      paddingLeft: '1rem',
+      borderRadius: '50px',
+    },
+    icon,
+  });
+}, 2000, {
+  leading: true,
+  trailing: false,
+});
+
 const otpGeneratorConfig = { digits: true, alphabets: false, upperCase: false, specialChars: false }
 
 const App = () => {
@@ -56,19 +77,14 @@ const App = () => {
   const [audio, setAudio] = useState();
   const [sensitivity, setSensitivity] = useState(parseFloat(cookies.sensitivity) || 0.3);
   const pubnub = usePubNub();
-  const [channels] = useState(['']);
   const [channelCode, setChannelCode] = useState(cookies.channel || '');
   const [joiningMode, setJoiningMode] = useState(false);
   const [isPublisher, setIsPublisher] = useState(cookies.isPublisher ? JSON.parse(cookies.isPublisher) : true);
   const [partyCode, setPartyCode] = useState();
-  const [messages, addMessage] = useState([]);
-  const [message, setMessage] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [canShare, setcanShare] = useState(false);
   const [copyText, setCopyText] = useState('Copy');
-  const { addToast } = useToasts();
-
-  console.log({ isPublisher });
+  const [micPermissionState, setMicPermissionState] = useState();
 
   const onSwipedUp = (eventData) => {
     setModalOpen(true)
@@ -94,6 +110,28 @@ const App = () => {
     const audio = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false
+    });
+    // audio.then(function(permissionStatus){    
+    //   console.log(permissionStatus); // granted, denied, prompt
+    //   permissionStatus.onchange = function(){
+    //       console.log("Mic Permission changed to " + this.state);
+    //       setMicPermissionState(this.state);
+    //   }
+    // }).catch((err) => {
+    //   console.log(`${err.name} : ${err.message}`)
+    // });
+
+    const micStatus = await navigator.permissions.query(
+        { name: 'microphone' }
+    ).then(function(permissionStatus){    
+        // console.log(permissionStatus.state); // granted, denied, prompt
+        setMicPermissionState(permissionStatus.state);
+        permissionStatus.onchange = function(){
+            // console.log("Mic Permission changed to " + this.state);
+            setMicPermissionState(this.state);
+        }
+    }).catch((err) => {
+      console.log(`${err.name} : ${err.message}`)
     });
     setAudio(audio)
   }
@@ -150,20 +188,20 @@ const App = () => {
     } else if (message.hasOwnProperty('type') && message.type === 'join') {
       const uuid = message.uuid;
       console.log({joined: uuid});
-      addToast('Someone joined the party.', { appearance: 'info', autoDismiss: true, autoDismissTimeout: 2000 });
+      addToast('Someone joined the party.', { icon: '👋', appearance: 'info', autoDismiss: true, autoDismissTimeout: 2000 })
     } else if (message.hasOwnProperty('type') && message.type === 'leave') {
       const uuid = message.uuid;
       if(uuid === localStorage.getItem('uuid')) {
-        addToast('You left the party.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+        addToast('You left the party.', { icon: '🚶🚪', appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
       } else {
-        addToast('Someone left the party.', { appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
+        addToast('Someone left the party.', { icon: '🚶🚪', appearance: 'error', autoDismiss: true, autoDismissTimeout: 2000 });
       }
       console.log({left: uuid});
     } else if (message.hasOwnProperty('type') && message.type === 'over') {
       const uuid = message.uuid;
-      addToast('Party is over. See you next time.', { appearance: 'error', autoDismiss: false});
+      addToast('Host ended party. Solo mode on!', { appearance: 'error', autoDismiss: false});
       changeBgColor('#FFFFFF');
-      leaveParty()
+      leaveParty({hasAdmin: true})
       console.log({uuid});
     }
   };
@@ -182,7 +220,6 @@ const App = () => {
     if (message) {
       pubnub
         .publish({ channel: channelCode, message })
-        .then(() => setMessage(''));
     }
   };
 
@@ -191,11 +228,13 @@ const App = () => {
     console.log({code})
   };
 
-  const joinParty = () => {
+  const joinParty = async () => {
     if(partyCode.length === 6) {
-      pubnub.subscribe({ channels: [channelCode] }, () => {
-        sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
-      })
+      await pubnub.subscribe({ channels: [channelCode], withPresence: true, });
+      // ToDo - Join msg after member subscribes needs fixing
+      // setTimeout(async () => {
+      //   await sendMessage({type: 'join', uuid: localStorage.getItem('uuid')})
+      // }, 2000);
       setChannelCode(partyCode)
       setCookie(null, "channel", partyCode, cookieConfig);
       setJoiningMode(false)
@@ -218,16 +257,22 @@ const App = () => {
     const code = getNewChannelCode().toString()
     setChannelCode(code);
     setCookie(null, "channel", code, cookieConfig);
+    addToast('Party Hosted. Invite friends!!', { icon: '🥳', appearance: 'success', autoDismiss: true, autoDismissTimeout: 2000 });
   }
 
-  const leaveParty = () => {
-    if(!isPublisher) {
-      toggleMicrophone();
-      sendMessage({type: 'leave', uuid: localStorage.getItem('uuid')})
-    } else {
-      sendMessage({type: 'over', uuid: localStorage.getItem('uuid')})
+  const leaveParty = async ({hasAdmin = false}) => {
+    console.log({hasAdmin, isPublisher});
+    if(!hasAdmin) {
+      if(!isPublisher) {
+        toggleMicrophone();
+        await sendMessage({type: 'leave', uuid: localStorage.getItem('uuid')})
+      } else {
+        await sendMessage({type: 'over', uuid: localStorage.getItem('uuid')})
+      }
     }
-    pubnub.unsubscribe({ channels: [channelCode] })
+    setTimeout(async () => {
+      await pubnub.unsubscribe({ channels: [channelCode] })
+    }, 500);
     changeBgColor('#FFFFFF');
     destroyCookie(null, "channel");
     destroyCookie(null, "isPublisher");
@@ -252,7 +297,7 @@ const App = () => {
     window.navigator.clipboard
       .writeText(channelCode)
       .then(res => {
-        addToast('Code Copied to Clipboard 📋', { appearance: 'success', autoDismiss: true, autoDismissTimeout: 2000 });
+        addToast('Code Copied to Clipboard', { icon: '📋', appearance: 'success', autoDismiss: true, autoDismissTimeout: 2000 });
         setCopyText('Copied');
         setTimeout(() => {
           setCopyText('Copy')
@@ -286,6 +331,14 @@ const App = () => {
         cb={callbackHandler}
       /> 
       : null}
+      {
+        !micPermissionState ?
+        <div className={styles.micDisabled}>
+          Please allow microphone access. This app needs it to work.
+          <Image width="320" height="300" src="/images/sad-kitty.gif" alt="mic disabled" />
+        </div>
+        : null
+      }
 
       <div {...SwipeUpHandler} className={styles.settings}>
         <span onClick={onSwipedUp} className={styles.swipeUpIcon}>&#8682;</span>
