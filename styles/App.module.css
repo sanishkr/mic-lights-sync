@@ -197,6 +197,15 @@
   box-shadow: none;
 }
 
+.madeBy {
+  font-size: 0.6rem;
+  color: gray;
+}
+
+.link {
+  color: rgb(9, 98, 172);
+}
+
 @keyframes fadeIn {
   0% {
     opacity: 0;

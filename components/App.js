@@ -417,6 +417,18 @@ const App = () => {
                     <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setJoiningMode(true)}>Join Party</button>
                   </div>
                 }
+
+                <p className={styles.madeBy}>
+                  {new Date().getFullYear()} &copy; Made by{' '}
+                  <a
+                    href="https://sanish.me"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.link}
+                  >
+                    SNS
+                  </a>
+                </p>
               </div>
             </div>
           </div>
