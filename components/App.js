@@ -107,21 +107,29 @@ const App = () => {
   });
   
   const getMicrophone = async () => {
-    const audio = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false
-    });
-    // audio.then(function(permissionStatus){    
-    //   console.log(permissionStatus); // granted, denied, prompt
-    //   permissionStatus.onchange = function(){
-    //       console.log("Mic Permission changed to " + this.state);
-    //       setMicPermissionState(this.state);
-    //   }
-    // }).catch((err) => {
-    //   console.log(`${err.name} : ${err.message}`)
-    // });
+    let audio = null;
+    try {
+      audio = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false
+      });
+      setAudio(audio)
+      setMicPermissionState('granted');
+      // audio.then(function(permissionStatus){    
+      //   alert(permissionStatus); // granted, denied, prompt
+      //   permissionStatus.onchange = function(){
+      //       console.log("Mic Permission changed to " + this.state);
+      //       setMicPermissionState(this.state);
+      //   }
+      // }).catch((err) => {
+      //   alert(`${err.name} : ${err.message}`)
+      // });
+    } catch (err) {
+      setMicPermissionState('denied');
+      console.log(`${err.name} : ${err.message}`)
+    }
 
-    const micStatus = await navigator.permissions.query(
+    const micStatus = await navigator.permissions?.query(
         { name: 'microphone' }
     ).then(function(permissionStatus){    
         // console.log(permissionStatus.state); // granted, denied, prompt
@@ -133,7 +141,6 @@ const App = () => {
     }).catch((err) => {
       console.log(`${err.name} : ${err.message}`)
     });
-    setAudio(audio)
   }
 
   const stopMicrophone = () => {
@@ -332,7 +339,7 @@ const App = () => {
       /> 
       : null}
       {
-        !micPermissionState ?
+        micPermissionState !== 'granted' ?
         <div className={styles.micDisabled}>
           Please allow microphone access. This app needs it to work.
           <Image width="320" height="300" src="/images/sad-kitty.gif" alt="mic disabled" />
